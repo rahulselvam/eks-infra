@@ -42,5 +42,5 @@ jobs:
         run: |
           # Dynamically changes into the directory chosen in the dropdown
           cd infra-modules/environments/${{ github.event.inputs.environment }}
-          terraform init [cite: 94]
+          terraform init
           terraform destroy -auto-approve

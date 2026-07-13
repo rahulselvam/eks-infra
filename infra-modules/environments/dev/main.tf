@@ -34,3 +34,13 @@ import {
   to = module.eks_dev.aws_eks_cluster.this
   id = "dev-eks-cluster1"
 }
+
+import {
+  to = module.eks_dev.aws_iam_role.cluster
+  id = "dev-eks-cluster1-cluster-role"
+}
+
+import {
+  to = module.eks_dev.aws_iam_role.nodes
+  id = "dev-eks-cluster1-node-role"
+}
