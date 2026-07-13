@@ -14,11 +14,11 @@ module "eks_dev" {
 
   aws_region   = var.aws_region
   environment  = var.environment
-  cluster_name = "${var.environment}-eks-cluster"
+  cluster_name = "${var.environment}-eks-cluster1"
   vpc_cidr     = var.vpc_cidr
 
   # Budget configuration: Public networks, Spot strategy, small constraints
-  enable_nat_gateway = false
+  enable_nat_gateway = true
   capacity_type      = "SPOT"
   instance_types     = ["t3.small"]
   desired_size       = 1
