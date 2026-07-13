@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'environments/**'
+      - 'infra-modules/environments/**'
   push:
     branches:
       - main
     paths:
-      - 'environments/**'
+      - 'infra-modules/environments/**'
 
 permissions:
   id-token: write # Required for secure AWS OIDC authentication
@@ -32,10 +32,10 @@ jobs:
         id: env-detector
         run: |
           # Parse path changes to see if dev, qa, or prod triggered this run
-          CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^environments/' | head -n 1 | cut -d'/' -f2)
+          CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^infra-modules/environments/' | head -n 1 | cut -d'/' -f2)
           if [ -z "$CHANGED_DIR" ]; then
             # Fallback check for Pull Requests
-            CHANGED_DIR=$(git diff --name-only origin/main | grep '^environments/' | head -n 1 | cut -d'/' -f2)
+            CHANGED_DIR=$(git diff --name-only origin/main | grep '^infra-modules/environments/' | head -n 1 | cut -d'/' -f2)
           fi
           echo "TARGET_ENV=$CHANGED_DIR" >> $GITHUB_ENV
           echo "Targeting Environment: $CHANGED_DIR"
@@ -56,7 +56,7 @@ jobs:
       # 5. Initialize the specific modified environment directory
       - name: Terraform Init
         run: |
-          cd environments/${{ env.TARGET_ENV }}
+          cd infra-modules/environments/${{ env.TARGET_ENV }}
           terraform init
 
       # 6. Run Plan for Pull Requests
@@ -64,7 +64,7 @@ jobs:
         if: github.event_name == 'pull_request'
         id: plan
         run: |
-          cd environments/${{ env.TARGET_ENV }}
+          cd infra-modules/environments/${{ env.TARGET_ENV }}
           terraform plan -no-color -out=tfplan
         continue-on-error: true
 
@@ -89,5 +89,5 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          cd environments/${{ env.TARGET_ENV }}
+          cd infra-modules/environments/${{ env.TARGET_ENV }}
           terraform apply -auto-approve
