@@ -14,7 +14,7 @@ module "eks_dev" {
 
   aws_region   = var.aws_region
   environment  = var.environment
-  cluster_name = "${var.environment}-eks-cluster1"
+  cluster_name = "${var.environment}-eks-cluster"
   vpc_cidr     = var.vpc_cidr
 
   # Budget configuration: Public networks, Spot strategy, small constraints
@@ -30,17 +30,17 @@ output "kubeconfig_cmd" {
   value = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks_dev.cluster_name}"
 }
 
-import {
-  to = module.eks_dev.aws_eks_cluster.this
-  id = "dev-eks-cluster1"
-}
+# import {
+#   to = module.eks_dev.aws_eks_cluster.this
+#   id = "dev-eks-cluster1"
+# }
 
-import {
-  to = module.eks_dev.aws_iam_role.cluster
-  id = "dev-eks-cluster1-cluster-role"
-}
+# import {
+#   to = module.eks_dev.aws_iam_role.cluster
+#   id = "dev-eks-cluster1-cluster-role"
+# }
 
-import {
-  to = module.eks_dev.aws_iam_role.nodes
-  id = "dev-eks-cluster1-node-role"
-}
+# import {
+#   to = module.eks_dev.aws_iam_role.nodes
+#   id = "dev-eks-cluster1-node-role"
+# }
