@@ -1,0 +1,46 @@
+name: "Manual Terraform Destroy"
+
+# 🛠️ This enables the manual execution button in the GitHub Actions UI
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which environment do you want to completely delete?'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    name: "Destroying Target Environment"
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+      - name: Run Destroy
+        run: |
+          # Dynamically changes into the directory chosen in the dropdown
+          cd infra-modules/environments/${{ github.event.inputs.environment }}
+          terraform init [cite: 94]
+          terraform destroy -auto-approve
