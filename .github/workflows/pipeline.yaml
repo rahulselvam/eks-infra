@@ -1,16 +1,16 @@
 name: "Terraform GitOps Orchestrator"
 
 on:
-#   pull_request:
-#     branches:
-#       - main
-#     paths:
-#       - 'infra-modules/environments/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infra-modules/environments/dev/**'
   push:
     branches:
       - main
-    # paths:
-    #   - 'infra-modules/environments/**'
+    paths:
+      - 'infra-modules/environments/dev/**'
 
 permissions:
   id-token: write # Required for secure AWS OIDC authentication

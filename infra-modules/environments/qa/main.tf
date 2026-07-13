@@ -10,7 +10,7 @@ provider "aws" {
 }
 
 module "eks_qa" {
-  source = "./infra-modules/eks-cluster"
+  source = "../../eks-cluster"
 
   aws_region   = var.aws_region
   environment  = var.environment
