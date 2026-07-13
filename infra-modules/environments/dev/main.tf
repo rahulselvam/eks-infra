@@ -29,3 +29,8 @@ module "eks_dev" {
 output "kubeconfig_cmd" {
   value = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks_dev.cluster_name}"
 }
+
+import {
+  to = module.eks_dev.aws_eks_cluster.this
+  id = "dev-eks-cluster1"
+}
