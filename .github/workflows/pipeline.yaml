@@ -1,0 +1,93 @@
+name: "Terraform GitOps Orchestrator"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'environments/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'environments/**'
+
+permissions:
+  id-token: write # Required for secure AWS OIDC authentication
+  contents: read
+  pull-requests: write # Required to allow GitHub to comment plans back onto PRs
+
+jobs:
+  terraform:
+    name: "Orchestrate Environment"
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clone the codebase onto the GitHub runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Determine which environment folder was modified (dev, qa, or prod)
+      - name: Detect Changed Environment
+        id: env-detector
+        run: |
+          # Parse path changes to see if dev, qa, or prod triggered this run
+          CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^environments/' | head -n 1 | cut -d'/' -f2)
+          if [ -z "$CHANGED_DIR" ]; then
+            # Fallback check for Pull Requests
+            CHANGED_DIR=$(git diff --name-only origin/main | grep '^environments/' | head -n 1 | cut -d'/' -f2)
+          fi
+          echo "TARGET_ENV=$CHANGED_DIR" >> $GITHUB_ENV
+          echo "Targeting Environment: $CHANGED_DIR"
+
+      # 3. Setup Terraform on the runner machine
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      # 4. Authenticate to AWS securely using OIDC (No hardcoded passwords!)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+      # 5. Initialize the specific modified environment directory
+      - name: Terraform Init
+        run: |
+          cd environments/${{ env.TARGET_ENV }}
+          terraform init
+
+      # 6. Run Plan for Pull Requests
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        id: plan
+        run: |
+          cd environments/${{ env.TARGET_ENV }}
+          terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      # 7. Post the Plan Output directly into the PR Chat for review
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Env: \`${process.env.TARGET_ENV}\` 🚀
+            #### Terraform Initialization ⚙️
+            #### Terraform Plan 📋
+            *Pushed by: @${{ github.actor }}*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      # 8. Run Apply ONLY when changes are merged successfully into Main
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          cd environments/${{ env.TARGET_ENV }}
+          terraform apply -auto-approve
